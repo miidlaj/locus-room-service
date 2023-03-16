@@ -1,0 +1,30 @@
+server:
+  port: 9002
+
+spring:
+
+  # Datasource properties
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    username: admin
+    url: jdbc:postgresql://localhost:5432/resort_db?currentSchema=sc_room&ssl=false
+    password: '1234'
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+
+  # Name of the Application
+  application:
+    name: ROOM-SERVICE
+  graphql:
+    cors:
+      allowed-origins: http://localhost:3000,http://localhost:4000
+services:
+  resort: http://localhost:9001/api/resort
+#  #Zipkin conf
+#  zipkin:
+#    base-url: http://127.0.0.1:9411/
+
+
