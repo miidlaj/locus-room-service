@@ -25,6 +25,6 @@ jobs:
         DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
       run: docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag ${{secrets.DOCKER_USER}}/locus-service-registry:image1
+      run: docker build . --file Dockerfile --tag ${{secrets.DOCKER_USER}}/locus-room-service:image1
     - name: Docker Push 
-      run: docker push ${{secrets.DOCKER_USER}}/locus-service-registry:image1
+      run: docker push ${{secrets.DOCKER_USER}}/locus-room-service:image1
