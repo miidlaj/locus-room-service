@@ -1,8 +1,6 @@
 package com.midlaj.room.entity;
 
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.RequiredArgsConstructor;
 
 import java.util.Date;
 import java.util.HashSet;

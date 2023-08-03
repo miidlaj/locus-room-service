@@ -17,4 +17,6 @@ public interface RoomDAO {
     Optional<Room> findByRoomCode(String roomCode);
 
     List<Room> getRoomsByResortId(Long id);
+
+    List<Room> findRoomByResortId(Long resortId);
 }

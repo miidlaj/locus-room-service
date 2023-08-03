@@ -44,4 +44,9 @@ public class RoomDAOImpl implements RoomDAO {
         return roomRepository.getRoomByResortId(id);
     }
 
+    @Override
+    public List<Room> findRoomByResortId(Long resortId) {
+        return roomRepository.findByResortIdAndEnabledTrue(resortId);
+    }
+
 }

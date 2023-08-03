@@ -60,4 +60,13 @@ public class RoomController {
         return roomService.getRoomById(id);
     }
 
+    @GetMapping("/booking/{roomId}")
+    public ResponseEntity<?> getRoomDetailsForBookings(@PathVariable Long roomId) {
+        log.info("Inside getRoomDetailsForBookings of RoomController");
+
+        return roomService.getRoomDetailsForBookings(roomId);
+    }
+
+
+
 }

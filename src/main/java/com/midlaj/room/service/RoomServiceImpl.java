@@ -4,14 +4,15 @@ import com.midlaj.room.dao.RoomDAO;
 import com.midlaj.room.dao.RoomFacilityDAO;
 import com.midlaj.room.dao.RoomImagesDOA;
 import com.midlaj.room.dao.RoomTypeDAO;
+import com.midlaj.room.dto.request.RoomAvailRequestDTO;
 import com.midlaj.room.dto.request.RoomRequestDTO;
 import com.midlaj.room.dto.response.RoomImageResponseDTO;
 import com.midlaj.room.dto.response.RoomListResponseDTO;
+import com.midlaj.room.dto.response.RoomResponseAvailDTO;
 import com.midlaj.room.dto.response.RoomResponseDTO;
 import com.midlaj.room.entity.*;
 import com.midlaj.room.exception.EntityNotFoundException;
 import com.midlaj.room.util.AmazonS3Util;
-import com.midlaj.room.util.Constants;
 import com.midlaj.room.util.CustomMultipartFile;
 import com.midlaj.room.util.ImageUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -21,13 +22,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.util.*;
 
 @Service
@@ -62,18 +63,16 @@ public class RoomServiceImpl implements RoomService{
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Room with code " + roomRequestDTO.getRoomCode() + " is Already present");
         }
 
-//        // Check Resort is Present
-//        String url = "http://localhost:9001/api/resort/roomService/" + roomRequestDTO.getResortId();
-//        String response = null;
-//        try {
-//            response = restTemplate.getForObject(url, String.class);
-//        } catch (HttpClientErrorException e) {
-//            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
-//                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Cannot find resort.");
-//            }
-//        }
-//
-//        System.out.println(response);
+        // Check Resort is Present
+        String url = "http://localhost:9001/api/resort/roomService/" + roomRequestDTO.getResortId();
+        String response = null;
+        try {
+            response = restTemplate.getForObject(url, String.class);
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Cannot find resort.");
+            }
+        }
 
 
         Room newRoom = new Room();
@@ -230,6 +229,53 @@ public class RoomServiceImpl implements RoomService{
         room.setEnabled(true);
         saveAndUpdateRoom(room);
         return ResponseEntity.ok("Enable status changed successfully");
+    }
+
+    @Override
+    public ResponseEntity<?> getRoomByAvail(Long resortId, LocalDate checkIn, LocalDate checkOut) {
+        List<Room> roomList = roomDAO.findRoomByResortId(resortId);
+        List<RoomResponseAvailDTO> availableRooms = new ArrayList<>();
+        for (Room room: roomList) {
+            ResponseEntity<Booking[]> response = null;
+            try {
+                response = new RestTemplate().getForEntity(
+                        "http://localhost:9004/api/bookings/" + room.getId() + "/" + checkIn+ "/" + checkOut,
+                        Booking[].class);
+            } catch (Exception ex) {
+                log.error(ex.getMessage());
+            }
+
+            if (response == null){
+                ResponseEntity.status(HttpStatus.CONFLICT).body("unexpected error");
+            } else if (response.getBody().length == 0){
+                availableRooms.add(buildAvailDTO(room));
+            }
+
+        }
+
+        return ResponseEntity.ok(availableRooms);
+    }
+
+    @Override
+    public ResponseEntity<?> getRoomDetailsForBookings(Long roomId) {
+
+        return null;
+    }
+
+    private RoomResponseAvailDTO buildAvailDTO(Room room) {
+
+        RoomResponseAvailDTO responseAvailDTO = RoomResponseAvailDTO.builder()
+                .id(room.getId())
+                .price(room.getPrice())
+                .roomFacilities(room.getFacilities())
+                .roomType(room.getRoomType().getName())
+                .roomCode(room.getRoomCode())
+                .description(room.getDescription())
+                .build();
+
+        responseAvailDTO.setImages(room.getImages());
+
+        return responseAvailDTO;
     }
 
     public RoomResponseDTO buildRoomResponseDTO(Room room) {
